@@ -16,8 +16,7 @@ public class Main {
             RecorderThread recorder = new RecorderThread(stream);
             BufferedReader breader = new BufferedReader(new InputStreamReader(System.in));
             SoundServer server = new SoundServer(8000);
-            SoundClient client = new SoundClient("<>", 8000);
-            client.connect();
+            final SoundClient client = new SoundClient("192.168.1.12", 8001);
             boolean running = true;
             System.out.println(String.format("STARTED: %s, MUTED: %s", !recorder.isStopped(), recorder.isMuted()));
 
@@ -38,7 +37,6 @@ public class Main {
             };
 
             Timer timer = new Timer();
-            timer.scheduleAtFixedRate(task, 0, 8);
 
             while (running) {
                 try {
@@ -58,6 +56,14 @@ public class Main {
                             break;
                         case "quit":
                             running = false;
+                            break;
+                        case "send":
+                            client.connect();
+                            timer.scheduleAtFixedRate(task, 0, 8);
+                            break;
+                        case "stop":
+                            client.close();
+                            timer.cancel();
                             break;
                         default:
                             System.out.println("WHOA!!");
