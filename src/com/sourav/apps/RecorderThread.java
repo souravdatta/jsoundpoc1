@@ -34,7 +34,7 @@ public class RecorderThread extends Thread {
     public RecorderThread(ByteArrayOutputStream stream) {
         this.setStream(stream);
         try {
-            tempBuffer = new byte[10000];
+            tempBuffer = new byte[20000];
             audioFormat = getAudioFormat();
             DataLine.Info dataLineInfo =
                     new DataLine.Info(

@@ -25,8 +25,11 @@ public class Playback {
     }
 
     public static void play(ByteArrayOutputStream stream) {
+        play(stream.toByteArray());
+    }
+
+    public static void play(byte[] audioData) {
         try {
-            byte audioData[] = stream.toByteArray();
             byte[] tempBuffer = new byte[10000];
             int cnt;
 
@@ -59,4 +62,6 @@ public class Playback {
             System.out.println("Oops!");
         }
     }
+
+
 }
