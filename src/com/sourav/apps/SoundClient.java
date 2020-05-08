@@ -24,5 +24,6 @@ public class SoundClient {
 
     public void close() throws Exception {
         this.clientSocket.close();
+        this.clientSocket = null;
     }
 }

@@ -16,7 +16,7 @@ public class Main {
             RecorderThread recorder = new RecorderThread(stream);
             BufferedReader breader = new BufferedReader(new InputStreamReader(System.in));
             SoundServer server = new SoundServer(8000);
-            final SoundClient client = new SoundClient("192.168.1.12", 8001);
+            final SoundClient client = new SoundClient("<>", 8001);
             boolean running = true;
             System.out.println(String.format("STARTED: %s, MUTED: %s", !recorder.isStopped(), recorder.isMuted()));
 
