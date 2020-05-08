@@ -21,7 +21,7 @@ public class PlayerThread extends Thread {
                 byte[] audioData = this.inputStream.readNBytes(20000);
                 Playback.play(audioData);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //ex.printStackTrace();
             }
         }
     }

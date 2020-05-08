@@ -59,7 +59,7 @@ public class Playback {
             sourceDataLine.drain();
             sourceDataLine.close();
         } catch (Exception ex) {
-            System.out.println("Oops!");
+            //System.out.println("Oops!");
         }
     }
 

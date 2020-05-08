@@ -68,7 +68,7 @@ public class RecorderThread extends Thread {
                     }
                     byteArrayOutputStream.close();
                 } catch (IOException ioex) {
-                    ioex.printStackTrace();
+                    //ioex.printStackTrace();
                 }
             } else {
                 // do not record sound here
@@ -77,7 +77,7 @@ public class RecorderThread extends Thread {
                 try {
                     Thread.sleep(10);
                 } catch (InterruptedException iex) {
-                    iex.printStackTrace();
+                    //iex.printStackTrace();
                 }
             }
         }

@@ -4,19 +4,42 @@ import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.sql.Time;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class Main {
 
     public static void main(String[] args) {
         try {
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            final ByteArrayOutputStream stream = new ByteArrayOutputStream();
             RecorderThread recorder = new RecorderThread(stream);
             BufferedReader breader = new BufferedReader(new InputStreamReader(System.in));
             SoundServer server = new SoundServer(8000);
-            SoundClient client = new SoundClient("127.0.0.1", 8000);
+            SoundClient client = new SoundClient("<>", 8000);
             client.connect();
             boolean running = true;
             System.out.println(String.format("STARTED: %s, MUTED: %s", !recorder.isStopped(), recorder.isMuted()));
+
+            TimerTask task = new TimerTask() {
+                @Override
+                public void run() {
+                    try {
+                        recorder.setMuted(true);
+                        client.send(stream.toByteArray().clone());
+                        //Playback.play(stream.toByteArray().clone());
+                        stream.reset();
+                        recorder.setStream(stream);
+                        recorder.setMuted(false);
+                    } catch (Exception ex) {
+                        System.exit(1);
+                    }
+                }
+            };
+
+            Timer timer = new Timer();
+            timer.scheduleAtFixedRate(task, 0, 8);
+
             while (running) {
                 try {
                     System.out.print(String.format("%s> ", recorder.isMuted() ? "MUTED" : "UNMUTED"));
@@ -36,15 +59,6 @@ public class Main {
                         case "quit":
                             running = false;
                             break;
-                        case "play":
-                            recorder.setMuted(true);
-                            client.send(stream.toByteArray().clone());
-                            //Playback.play(stream.toByteArray().clone());
-                            stream = null;
-                            stream = new ByteArrayOutputStream();
-                            recorder.setStream(stream);
-                            recorder.setMuted(false);
-                            break;
                         default:
                             System.out.println("WHOA!!");
                             break;
@@ -58,8 +72,10 @@ public class Main {
             recorder.stopThread();
             server.stopThread();
             client.close();
+            timer.cancel();
         } catch (Exception ex) {
             System.out.println("Ok closing app now");
+            System.exit(1);
         }
     }
 }
