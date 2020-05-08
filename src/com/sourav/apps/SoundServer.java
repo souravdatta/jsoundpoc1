@@ -1,9 +1,8 @@
 package com.sourav.apps;
 
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.net.*;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
 
 public class SoundServer extends Thread {
@@ -16,9 +15,38 @@ public class SoundServer extends Thread {
         this.port = port;
         this.players = new ArrayList<>();
         this.serverSocket = new ServerSocket(port);
-        System.out.println(String.format("[INFO] Server started at %s:%d", InetAddress.getLocalHost(),
+        System.out.println(String.format("[INFO] Server started at %s:%d", this.getHostIpAddress(),
                 this.serverSocket.getLocalPort()));
         this.start();
+    }
+
+    private String getHostIpAddress() {
+        try {
+            Enumeration<NetworkInterface> networkInterfaces = NetworkInterface
+                    .getNetworkInterfaces();
+            while (networkInterfaces.hasMoreElements()) {
+                NetworkInterface ni = networkInterfaces
+                        .nextElement();
+                Enumeration<InetAddress> nias = ni.getInetAddresses();
+                while(nias.hasMoreElements()) {
+                    InetAddress ia = nias.nextElement();
+                    if (!ia.isLinkLocalAddress()
+                            && !ia.isLoopbackAddress()
+                            && ia instanceof Inet4Address) {
+                        return ia.getHostAddress();
+                    }
+                }
+            }
+        } catch (Exception ex1) {
+            try {
+                return InetAddress.getLocalHost().getHostAddress();
+            } catch (Exception ex2) {
+                System.out.println("Something failed while getting ip address");
+                return "127.0.0.1";
+            }
+        }
+
+        return "127.0.0.1";
     }
 
     public void run() {
