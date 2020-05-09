@@ -1,34 +1,53 @@
 package com.sourav.apps;
 
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.sql.Time;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class Main {
 
     public static void main(String[] args) {
         try {
-            final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            RecorderThread recorder = new RecorderThread(stream);
+            final Deque<AudioData> dataQueue = new ArrayDeque<>();
+            RecorderThread recorder = new RecorderThread(dataQueue);
             BufferedReader breader = new BufferedReader(new InputStreamReader(System.in));
-            SoundServer server = new SoundServer(8000);
-            final SoundClient client = new SoundClient("<>", 8001);
+
+            System.out.print("Enter server port: ");
+            String input = breader.readLine();
+            int port = Integer.parseInt(input);
+
+            System.out.print("Enter remote ip address: ");
+            String remoteIp = breader.readLine();
+
+            System.out.print("Enter remote port: ");
+            input = breader.readLine();
+            int remotePort = Integer.parseInt(input);
+
+            SoundServer server = new SoundServer(port);
+            final SoundClient client = new SoundClient(remoteIp, remotePort);
             boolean running = true;
-            System.out.println(String.format("STARTED: %s, MUTED: %s", !recorder.isStopped(), recorder.isMuted()));
 
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
                     try {
+                        if (recorder.isMuted())
+                            return;
+
                         recorder.setMuted(true);
-                        client.send(stream.toByteArray().clone());
-                        //Playback.play(stream.toByteArray().clone());
-                        stream.reset();
-                        recorder.setStream(stream);
+                        AudioData audioData = null;
+
+                        synchronized (dataQueue) {
+                            if (!dataQueue.isEmpty()) {
+                                audioData = dataQueue.pop();
+                                //System.out.println("|C> " + dataQueue.size());
+                            }
+                        }
+
+                        if (audioData != null) {
+                            client.send(audioData.getRawBytes());
+                        }
                         recorder.setMuted(false);
                     } catch (Exception ex) {
                         System.exit(1);
@@ -43,7 +62,7 @@ public class Main {
                     System.out.print(String.format("%s> ", recorder.isMuted() ? "MUTED" : "UNMUTED"));
                     System.out.flush();
 
-                    String input = breader.readLine();
+                    input = breader.readLine();
 
                     switch (input) {
                         case "mute":
@@ -60,10 +79,6 @@ public class Main {
                         case "send":
                             client.connect();
                             timer.scheduleAtFixedRate(task, 0, 8);
-                            break;
-                        case "stop":
-                            client.close();
-                            timer.cancel();
                             break;
                         default:
                             System.out.println("WHOA!!");

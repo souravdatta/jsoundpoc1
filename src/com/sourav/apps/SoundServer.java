@@ -56,7 +56,7 @@ public class SoundServer extends Thread {
                 PlayerThread player = new PlayerThread(client);
                 this.players.add(player);
             } catch (Exception ex) {
-                ex.printStackTrace();
+                //ex.printStackTrace();
             }
         }
     }

@@ -1,16 +1,14 @@
 package com.sourav.apps;
 
 import javax.sound.sampled.*;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
+import java.util.Deque;
 
 public class RecorderThread extends Thread {
     private volatile boolean muted = true;
     private volatile boolean stopped = false;
-    private ByteArrayOutputStream byteArrayOutputStream;
+    private Deque<AudioData> dataQueue;
     private AudioFormat audioFormat;
     private TargetDataLine targetDataLine;
-    byte[] tempBuffer;
 
     private AudioFormat getAudioFormat() {
         float sampleRate = 8000.0F;
@@ -31,10 +29,9 @@ public class RecorderThread extends Thread {
                 bigEndian);
     }
 
-    public RecorderThread(ByteArrayOutputStream stream) {
-        this.setStream(stream);
+    public RecorderThread(Deque<AudioData> dataQueue) {
+        this.setDataQueue(dataQueue);
         try {
-            tempBuffer = new byte[20000];
             audioFormat = getAudioFormat();
             DataLine.Info dataLineInfo =
                     new DataLine.Info(
@@ -56,19 +53,17 @@ public class RecorderThread extends Thread {
 
         while (!isStopped()) {
             if (!isMuted()) {
-                try {
-                    int cnt = targetDataLine.read(
-                            tempBuffer,
-                            0,
-                            tempBuffer.length);
-                    if (cnt > 0) {
-                        System.out.flush();
-                        byteArrayOutputStream.write(
-                                tempBuffer, 0, cnt);
+                byte[] tempBuffer = new byte[6000];
+                int cnt = targetDataLine.read(
+                        tempBuffer,
+                        0,
+                        tempBuffer.length);
+                if (cnt > 0) {
+                    System.out.flush();
+                    synchronized (this.dataQueue) {
+                        //System.out.println("|P> " + this.dataQueue.size());
+                        this.dataQueue.push(new AudioData(tempBuffer.clone()));
                     }
-                    byteArrayOutputStream.close();
-                } catch (IOException ioex) {
-                    //ioex.printStackTrace();
                 }
             } else {
                 // do not record sound here
@@ -83,11 +78,11 @@ public class RecorderThread extends Thread {
         }
     }
 
-    public boolean isMuted() {
+    public synchronized boolean isMuted() {
         return muted;
     }
 
-    public void setMuted(boolean muted) {
+    public synchronized void setMuted(boolean muted) {
         this.muted = muted;
     }
 
@@ -99,8 +94,11 @@ public class RecorderThread extends Thread {
         this.stopped = true;
     }
 
-    public void setStream(ByteArrayOutputStream stream) {
-        this.byteArrayOutputStream = null;
-        this.byteArrayOutputStream = stream;
+    public Deque<AudioData> getDataQueue() {
+        return dataQueue;
+    }
+
+    public void setDataQueue(Deque<AudioData> dataQueue) {
+        this.dataQueue = dataQueue;
     }
 }
